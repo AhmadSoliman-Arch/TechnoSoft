@@ -289,6 +289,44 @@
   .stat-num { font-size: 22px; font-weight: 700; color: var(--navy); }
   .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
+  /* business metrics section */
+  .metrics-section { margin-bottom: 16px; }
+  .metrics-title {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.8px;
+    margin-bottom: 8px; padding-left: 2px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .metrics-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .metric-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px;
+    transition: box-shadow 0.2s;
+  }
+  .metric-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+  .metric-icon {
+    font-size: 18px; width: 34px; height: 34px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .metric-icon.hotel  { background: #EBF3FB; }
+  .metric-icon.fnb    { background: #FFF4EC; }
+  .metric-icon.retail { background: #FFFBE6; }
+  .metric-icon.erp    { background: #E8F5E1; }
+  .metric-info { flex: 1; min-width: 0; }
+  .metric-name { font-size: 11px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .metric-sub  { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .metric-right { text-align: right; flex-shrink: 0; }
+  .metric-count { font-size: 20px; font-weight: 700; color: var(--navy); }
+  .metric-count.has-tickets { color: var(--p2); }
+  .metric-count.has-p1 { color: var(--p1); }
+  .metric-p1-tag {
+    font-size: 10px; font-weight: 700; color: var(--p1);
+    background: var(--p1-bg); border: 1px solid var(--p1);
+    border-radius: 6px; padding: 1px 5px; margin-top: 2px; display: inline-block;
+  }
+
   /* ticket list */
   .ticket-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -464,6 +502,58 @@
         <div class="stat-card">
           <div class="stat-num" id="statResolved" style="color:var(--green)">0</div>
           <div class="stat-label">Self-Resolved</div>
+        </div>
+      </div>
+
+
+      <!-- Business Solution Metrics -->
+      <div class="metrics-section">
+        <div class="metrics-title">Tickets by Business Solution</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon hotel">🏨</div>
+            <div class="metric-info">
+              <div class="metric-name">Hotel PMS</div>
+              <div class="metric-sub">Reservations · Front Desk · Audit</div>
+            </div>
+            <div class="metric-right">
+              <div class="metric-count" id="metricHotel">0</div>
+              <div id="metricHotelP1"></div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon fnb">🍽️</div>
+            <div class="metric-info">
+              <div class="metric-name">F&amp;B Solution</div>
+              <div class="metric-sub">POS · KDS · Recipe · Inventory</div>
+            </div>
+            <div class="metric-right">
+              <div class="metric-count" id="metricFnb">0</div>
+              <div id="metricFnbP1"></div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon retail">🛒</div>
+            <div class="metric-info">
+              <div class="metric-name">Retail Solution</div>
+              <div class="metric-sub">POS · Loyalty · Promotions</div>
+            </div>
+            <div class="metric-right">
+              <div class="metric-count" id="metricRetail">0</div>
+              <div id="metricRetailP1"></div>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon erp">🏢</div>
+            <div class="metric-info">
+              <div class="metric-name">Enterprise ERP</div>
+              <div class="metric-sub">Finance · HR · Inventory · Purchasing</div>
+            </div>
+            <div class="metric-right">
+              <div class="metric-count" id="metricErp">0</div>
+              <div id="metricErpP1"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -983,12 +1073,37 @@ function renderTicketCard(ticket) {
   list.insertBefore(card, list.firstChild);
 }
 
+function detectSolution(product) {
+  const p = product.toLowerCase();
+  if (p.includes('hotel') || p.includes('pms') || p.includes('hms') || p.includes('hospitality') || p.includes('night audit') || p.includes('reservation') || p.includes('front desk') || p.includes('housekeeping') || p.includes('folio')) return 'hotel';
+  if (p.includes('f&b') || p.includes('food') || p.includes('beverage') || p.includes('fnb') || p.includes('kds') || p.includes('recipe') || p.includes('restaurant') || p.includes('kitchen') || p.includes('table')) return 'fnb';
+  if (p.includes('retail') || p.includes('loyalty') || p.includes('promotion') || p.includes('crm')) return 'retail';
+  if (p.includes('erp') || p.includes('finance') || p.includes('hr') || p.includes('payroll') || p.includes('inventory') || p.includes('purchasing') || p.includes('procurement') || p.includes('warehouse') || p.includes('manufacturing') || p.includes('supply') || p.includes('sales') || p.includes('distribution')) return 'erp';
+  return null;
+}
+
 function updateStats() {
   const dispatched = tickets.filter(t => t.type === 'dispatched');
   document.getElementById('statTotal').textContent    = dispatched.length;
   document.getElementById('statP1').textContent       = dispatched.filter(t => t.priority === 'P1').length;
   document.getElementById('statP2').textContent       = dispatched.filter(t => t.priority === 'P2').length;
   document.getElementById('statResolved').textContent = selfResolved;
+
+  // Business solution breakdown
+  const solutions = { hotel: 'Hotel', fnb: 'Fnb', retail: 'Retail', erp: 'Erp' };
+  Object.keys(solutions).forEach(key => {
+    const label = solutions[key];
+    const solutionTickets = dispatched.filter(t => detectSolution(t.product) === key);
+    const count = solutionTickets.length;
+    const p1count = solutionTickets.filter(t => t.priority === 'P1').length;
+
+    const el = document.getElementById('metric' + label);
+    el.textContent = count;
+    el.className = 'metric-count' + (p1count > 0 ? ' has-p1' : count > 0 ? ' has-tickets' : '');
+
+    const p1el = document.getElementById('metric' + label + 'P1');
+    p1el.innerHTML = p1count > 0 ? '<span class="metric-p1-tag">⚠ ' + p1count + ' P1</span>' : '';
+  });
 }
 
 // ══════════════════════════════════════════════════════════════
