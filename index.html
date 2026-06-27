@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TechnoSoft Intelligent Helpdesk</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:    #1F4E79;
+    --blue:    #2E75B6;
+    --light:   #EBF3FB;
+    --bg:      #F0F4F8;
+    --surface: #FFFFFF;
+    --border:  #D0DDE8;
+    --text:    #1A2733;
+    --muted:   #6B8099;
+    --p1:      #C00000;
+    --p1-bg:   #FFF0F0;
+    --p2:      #C55A00;
+    --p2-bg:   #FFF4EC;
+    --p3:      #7A6000;
+    --p3-bg:   #FFFBE6;
+    --p4:      #3D5A6B;
+    --p4-bg:   #EFF6FA;
+    --green:   #375623;
+    --green-bg:#E8F5E1;
+    --font:    'Segoe UI', Arial, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--navy);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 56px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
+  .logo span { color: #7EC8E3; }
+  .tagline { font-size: 12px; color: #A8C8E0; border-left: 1px solid #3A6A90; padding-left: 14px; }
+  .header-right { display: flex; align-items: center; gap: 20px; }
+  .agent-status { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #A8C8E0; }
+  .status-dot { width: 9px; height: 9px; border-radius: 50%; background: #4CAF50; box-shadow: 0 0 6px #4CAF50; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  /* API Key input in header */
+  .api-key-area { display: flex; align-items: center; gap: 8px; }
+  .api-key-area input {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: #fff;
+    width: 220px;
+    outline: none;
+    letter-spacing: 0.5px;
+  }
+  .api-key-area input::placeholder { color: rgba(255,255,255,0.45); }
+  .api-key-area input:focus { border-color: #7EC8E3; background: rgba(255,255,255,0.15); }
+  .api-save-btn {
+    background: #2E75B6;
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+  }
+  .api-save-btn:hover { background: #7EC8E3; color: var(--navy); }
+  .api-key-label { font-size: 11px; color: #A8C8E0; white-space: nowrap; }
+
+  /* ── MAIN LAYOUT ── */
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* ── LEFT PANEL — CHAT ── */
+  .chat-panel {
+    width: 48%;
+    min-width: 380px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .panel-header {
+    background: var(--light);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .panel-title { font-size: 13px; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: 0.8px; }
+  .panel-header-right { display: flex; align-items: center; gap: 10px; }
+  .session-badge { font-size: 11px; color: var(--muted); background: var(--border); padding: 3px 8px; border-radius: 10px; }
+  .clear-btn {
+    font-size: 11px; color: var(--muted); background: transparent;
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 3px 10px; cursor: pointer; transition: all 0.2s;
+  }
+  .clear-btn:hover { background: #fee2e2; color: #c00; border-color: #c00; }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* welcome */
+  .welcome-card {
+    background: linear-gradient(135deg, var(--light) 0%, #D6EAF8 100%);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--navy);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .welcome-card h3 { color: var(--navy); font-size: 15px; margin-bottom: 8px; }
+  .welcome-card p { color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .product-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .product-tag { background: var(--navy); color: #fff; font-size: 11px; padding: 3px 10px; border-radius: 12px; }
+
+  /* messages */
+  .msg { display: flex; gap: 10px; align-items: flex-start; }
+  .msg.user { flex-direction: row-reverse; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .avatar.agent { background: var(--navy); color: #fff; }
+  .avatar.user  { background: var(--blue); color: #fff; }
+
+  .bubble {
+    max-width: 82%;
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+  .msg.agent .bubble {
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-top-left-radius: 3px;
+    color: var(--text);
+  }
+  .msg.user .bubble {
+    background: var(--blue);
+    color: #fff;
+    border-top-right-radius: 3px;
+  }
+
+  /* ticket envelope */
+  .ticket-envelope {
+    background: #0D1117;
+    border: 1px solid #30363D;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-top: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  .env-header { color: #58A6FF; font-weight: 700; margin-bottom: 6px; }
+  .env-row { color: #E6EDF3; word-break: break-word; }
+  .env-row .label { color: #7EE787; }
+  .env-priority-p1 { color: #FF7B72; font-weight: 700; }
+  .env-priority-p2 { color: #FFA657; font-weight: 700; }
+  .env-priority-p3 { color: #E3B341; font-weight: 700; }
+  .env-priority-p4 { color: #79C0FF; font-weight: 700; }
+  .env-footer { color: #58A6FF; font-weight: 700; margin-top: 6px; }
+
+  /* typing indicator */
+  .typing { display: flex; align-items: center; gap: 5px; padding: 4px 0; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); animation: bounce 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+  /* input */
+  .chat-input-area {
+    border-top: 1px solid var(--border);
+    padding: 14px 18px;
+    background: #FAFCFE;
+    flex-shrink: 0;
+  }
+  .input-row { display: flex; gap: 10px; align-items: flex-end; }
+  #userInput {
+    flex: 1;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13.5px;
+    font-family: var(--font);
+    resize: none;
+    height: 44px;
+    max-height: 120px;
+    outline: none;
+    transition: border-color 0.2s;
+    color: var(--text);
+    overflow-y: auto;
+    line-height: 1.5;
+  }
+  #userInput:focus { border-color: var(--blue); }
+  #userInput:disabled { background: #f5f5f5; }
+  #sendBtn {
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 0 20px;
+    height: 44px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  #sendBtn:hover:not(:disabled) { background: var(--blue); }
+  #sendBtn:disabled { background: var(--muted); cursor: not-allowed; }
+  .input-hint { font-size: 11px; color: var(--muted); margin-top: 7px; }
+
+  /* ── RIGHT PANEL — CRM ── */
+  .crm-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    min-width: 0;
+  }
+  .crm-header {
+    background: var(--light);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .crm-header-right { display: flex; gap: 8px; }
+  .export-btn {
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.4px;
+    transition: background 0.2s;
+  }
+  .export-btn:hover { background: var(--blue); }
+
+  .crm-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+  /* stats row */
+  .stats-row { display: flex; gap: 10px; margin-bottom: 16px; }
+  .stat-card {
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px;
+    text-align: center;
+  }
+  .stat-num { font-size: 22px; font-weight: 700; color: var(--navy); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ticket list */
+  .ticket-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .ticket-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border-left: 4px solid var(--border);
+    transition: box-shadow 0.2s;
+  }
+  .ticket-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+  .ticket-card.p1 { border-left-color: var(--p1); }
+  .ticket-card.p2 { border-left-color: var(--p2); }
+  .ticket-card.p3 { border-left-color: var(--p3); }
+  .ticket-card.p4 { border-left-color: var(--p4); }
+
+  .tc-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .tc-id { font-size: 12px; font-weight: 700; color: var(--navy); font-family: monospace; }
+  .tc-time { font-size: 11px; color: var(--muted); }
+
+  .tc-mid { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .tc-client { font-size: 13px; font-weight: 600; color: var(--text); }
+  .tc-product { font-size: 11px; color: var(--muted); }
+
+  .priority-badge {
+    font-size: 11px; font-weight: 700;
+    padding: 2px 9px; border-radius: 10px;
+    letter-spacing: 0.4px;
+  }
+  .priority-badge.p1 { background: var(--p1-bg); color: var(--p1); border: 1px solid var(--p1); }
+  .priority-badge.p2 { background: var(--p2-bg); color: var(--p2); border: 1px solid var(--p2); }
+  .priority-badge.p3 { background: var(--p3-bg); color: var(--p3); border: 1px solid var(--p3); }
+  .priority-badge.p4 { background: var(--p4-bg); color: var(--p4); border: 1px solid var(--p4); }
+
+  .team-badge {
+    font-size: 11px; color: var(--blue);
+    background: var(--light); border: 1px solid var(--border);
+    padding: 2px 9px; border-radius: 10px;
+  }
+
+  .tc-problem { font-size: 12px; color: var(--muted); line-height: 1.5; border-top: 1px solid var(--border); padding-top: 8px; }
+
+  /* resolved card */
+  .ticket-card.resolved {
+    border-left-color: var(--green);
+    opacity: 0.85;
+  }
+  .resolved-badge {
+    font-size: 11px; font-weight: 700;
+    padding: 2px 9px; border-radius: 10px;
+    background: var(--green-bg); color: var(--green);
+    border: 1px solid var(--green);
+    letter-spacing: 0.4px;
+  }
+
+  .empty-crm {
+    text-align: center; padding: 60px 20px;
+    color: var(--muted); font-size: 14px;
+  }
+  .empty-crm .icon { font-size: 40px; margin-bottom: 12px; }
+
+  /* KB context */
+  .kb-context {
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .kb-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 7px; }
+  .kb-items { display: flex; gap: 12px; flex-wrap: wrap; }
+  .kb-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--blue); }
+  .kb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+  .kb-note { font-size: 11px; color: var(--muted); margin-top: 6px; font-style: italic; }
+
+  /* toast notification */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: #1a2733; color: #fff; border-radius: 8px;
+    padding: 10px 20px; font-size: 13px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    z-index: 9999; opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-left">
+    <div class="logo">Techno<span>Soft</span> &nbsp;|&nbsp; Support Operations v2.6</div>
+    <div class="tagline">Intelligent Helpdesk Agent</div>
+  </div>
+  <div class="header-right">
+    <div class="api-key-area">
+      <span class="api-key-label">Gemini API Key:</span>
+      <input type="password" id="apiKeyInput" placeholder="Paste your API key here…" autocomplete="off" />
+      <button class="api-save-btn" onclick="saveApiKey()">SAVE</button>
+    </div>
+    <div class="agent-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">AGENT ONLINE</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+  <!-- LEFT: CHAT -->
+  <div class="chat-panel">
+    <div class="panel-header">
+      <div class="panel-title">Interactive Support Triage</div>
+      <div class="panel-header-right">
+        <div class="session-badge" id="sessionId">SESSION: #00000</div>
+        <button class="clear-btn" onclick="clearSession()">↺ NEW SESSION</button>
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="welcome-card">
+        <h3>TechnoSoft AI Support Agent</h3>
+        <p>Powered by Gemini AI with full knowledge base context (KB-001, KB-002, KB-003). I can triage your issue, provide self-service resolution steps, or open a support ticket and assign it to the right engineering team.</p>
+        <div class="product-tags">
+          <span class="product-tag">Hotel PMS</span>
+          <span class="product-tag">F&B Solution</span>
+          <span class="product-tag">Retail Solution</span>
+          <span class="product-tag">Enterprise ERP</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="input-row">
+        <textarea id="userInput" placeholder="Describe your issue here…" rows="1"></textarea>
+        <button id="sendBtn" onclick="sendMessage()">SEND ▶</button>
+      </div>
+      <div class="input-hint">Press <strong>Enter</strong> to send &nbsp;·&nbsp; <strong>Shift+Enter</strong> for new line</div>
+    </div>
+  </div>
+
+  <!-- RIGHT: CRM -->
+  <div class="crm-panel">
+    <div class="crm-header">
+      <div class="panel-title">Live Dispatch CRM Log</div>
+      <div class="crm-header-right">
+        <button class="export-btn" onclick="exportCSV()">⬇ EXPORT CSV</button>
+      </div>
+    </div>
+
+    <div class="crm-body">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num" id="statTotal">0</div>
+          <div class="stat-label">Total Tickets</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statP1" style="color:var(--p1)">0</div>
+          <div class="stat-label">P1 Critical</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statP2" style="color:var(--p2)">0</div>
+          <div class="stat-label">P2 High</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statResolved" style="color:var(--green)">0</div>
+          <div class="stat-label">Self-Resolved</div>
+        </div>
+      </div>
+
+      <div class="ticket-list" id="ticketList">
+        <div class="empty-crm">
+          <div class="icon">🎫</div>
+          <div>No tickets yet. Start a support conversation to see live dispatch logs here.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kb-context">
+      <div class="kb-title">Active Knowledge Base Context</div>
+      <div class="kb-items">
+        <div class="kb-item"><div class="kb-dot"></div> KB-001: Common Issue Resolutions</div>
+        <div class="kb-item"><div class="kb-dot"></div> KB-002: Escalation & SLA Protocols</div>
+        <div class="kb-item"><div class="kb-dot"></div> KB-003: Product & Module Directory</div>
+      </div>
+      <div class="kb-note" id="kbNote">⚠ No API key set. Paste your Gemini API key in the header to activate the agent.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════════════════
+const MODEL   = "gemini-flash-latest";
+
+function getApiUrl() {
+  const key = getApiKey();
+  return `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
+}
+
+function getApiKey() {
+  return sessionStorage.getItem('ts_gemini_key') || '';
+}
+
+function saveApiKey() {
+  const val = document.getElementById('apiKeyInput').value.trim();
+  if (!val) { showToast('Please paste your API key first.'); return; }
+  sessionStorage.setItem('ts_gemini_key', val);
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('apiKeyInput').placeholder = '●●●●●●●●●●●● (key saved)';
+  document.getElementById('kbNote').textContent = '✔ API key active. System running live Gemini API.';
+  document.getElementById('kbNote').style.color = 'var(--green)';
+  setAgentStatus(true);
+  showToast('API key saved. Agent is ready.');
+  // Auto-trigger greeting
+  triggerGreeting();
+}
+
+function setAgentStatus(online) {
+  const dot  = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  dot.style.background    = online ? '#4CAF50' : '#aaa';
+  dot.style.boxShadow     = online ? '0 0 6px #4CAF50' : 'none';
+  dot.style.animation     = online ? 'pulse 2s infinite' : 'none';
+  text.textContent        = online ? 'AGENT ONLINE' : 'NO API KEY';
+}
+
+// Check if key already in session on load
+window.addEventListener('DOMContentLoaded', () => {
+  if (getApiKey()) {
+    document.getElementById('apiKeyInput').placeholder = '●●●●●●●●●●●● (key saved)';
+    document.getElementById('kbNote').textContent = '✔ API key active. System running live Gemini API.';
+    document.getElementById('kbNote').style.color = 'var(--green)';
+    setAgentStatus(true);
+    triggerGreeting();
+  } else {
+    setAgentStatus(false);
+  }
+  document.getElementById('sessionId').textContent = `SESSION: #${sessionNum}-A`;
+});
+
+// ══════════════════════════════════════════════════════════════
+// SYSTEM PROMPT
+// ══════════════════════════════════════════════════════════════
+const SYSTEM_PROMPT = `// ============================================================
+// TECHNOSOFT INTELLIGENT HELPDESK AGENT — SYSTEM PROMPT v1.0
+// Platform: Google AI Studio / Gemini API
+// Knowledge Base: KB-001 v1.0 | KB-002 v1.0 | KB-003 v1.0
+// ============================================================
+
+[ROLE]
+You are the TechnoSoft Intelligent Helpdesk Agent — an AI-powered first-line support assistant for TechnoSoft Business Solutions, an enterprise ERP provider established in 1984 with 200+ employees. You serve clients who use:
+- Hotel Management System (HMS/PMS): Reservations, Front Desk, Housekeeping, Night Audit, Folios & Billing, Rate & Channel Management
+- Food & Beverage Solution (POS + F&B ERP): POS Terminal, KDS, Table Management, Recipe Costing, F&B Procurement & Inventory
+- Retail Solution (POS + Retail ERP): POS, Loyalty & CRM, Promotions Engine, Inventory, Purchasing, Pricing & Margin
+- Enterprise ERP (Commercial/Industrial/Service): Finance & Accounting, HR & Payroll, Inventory & Warehouse, Purchasing & Procurement, Sales & Distribution, Manufacturing, Project Management
+
+[GOAL]
+GOAL 1 — TRIAGE: Receive and accurately triage client-reported technical issues by identifying the correct product line, module, and issue code.
+GOAL 2 — SELF-SERVICE: For [SELF-SERVICE] issues, deliver step-by-step resolution and confirm resolution.
+GOAL 3 — TICKET CREATION: For [ENGINEER REQUIRED] issues or failed self-service, create a structured ticket with TICKET DISPATCH ENVELOPE, communicate ticket number and SLA to client, route to correct team.
+GOAL 4 — COMMUNICATION: Maintain empathetic, professional communication. Always set expectations. Never leave a client without a next step.
+
+[CONTEXT]
+Knowledge Base Summary:
+
+KB-001 ISSUES (40 total across 7 modules):
+Finance (FIN-001 to FIN-008): FIN-001 Period Closed [SELF-SERVICE], FIN-002 Bank Rec Mismatch [ENGINEER REQUIRED], FIN-003 Report Wrong [SELF-SERVICE], FIN-004 Cannot Close Period [SELF-SERVICE], FIN-005 Wrong FX Rate [SELF-SERVICE], FIN-006 Tax Calc Wrong [ENGINEER REQUIRED] ALWAYS P1, FIN-007 Cannot Delete Posted Entry [SELF-SERVICE] P4, FIN-008 AR Aging Wrong [SELF-SERVICE]
+Inventory (INV-001 to INV-006): INV-001 Negative Stock [ENGINEER REQUIRED], INV-002 Barcode Not Scanning [SELF-SERVICE], INV-003 Physical Count Variance [ENGINEER REQUIRED], INV-004 Transfer Not Reflecting [SELF-SERVICE], INV-005 Reorder Alerts Not Triggering [SELF-SERVICE], INV-006 Cost Price Not Updating [ENGINEER REQUIRED]
+HR & Payroll (HR-001 to HR-006): HR-001 Payroll Incorrect [ENGINEER REQUIRED] ALWAYS P1, HR-002 Leave Balance Error [SELF-SERVICE], HR-003 Attendance Missing [ENGINEER REQUIRED], HR-004 End of Service Wrong [ENGINEER REQUIRED] ALWAYS P1, HR-005 Social Insurance Error [ENGINEER REQUIRED] ALWAYS P1, HR-006 Payslips Not Sending [SELF-SERVICE]
+POS & F&B (POS-001 to POS-008): POS-001 POS Terminal Not Opening [ENGINEER REQUIRED] ALWAYS P1, POS-002 Menu Not Appearing [ENGINEER REQUIRED], POS-003 Cash Drawer Not Opening [SELF-SERVICE], POS-004 KDS Not Showing Orders [ENGINEER REQUIRED], POS-005 Void/Refund Rejected [SELF-SERVICE], POS-006 Shift Cash Not Balancing [SELF-SERVICE], POS-007 Recipe Costing Not Updating [SELF-SERVICE], POS-008 Discount Not Applying [SELF-SERVICE]
+Hotel PMS (PMS-001 to PMS-008): PMS-001 Night Audit Failed [ENGINEER REQUIRED] ALWAYS P1, PMS-002 Guest Folio Incorrect [ENGINEER REQUIRED], PMS-003 Room Status Not Updating [SELF-SERVICE], PMS-004 Reservation Not Appearing [ENGINEER REQUIRED], PMS-005 Check-in Blocked OOO [SELF-SERVICE], PMS-006 Rate Plan Wrong [SELF-SERVICE], PMS-007 Loyalty Points Not Credited [SELF-SERVICE] P4, PMS-008 Reports Not Generating [SELF-SERVICE]
+Purchasing (PUR-001 to PUR-005): PUR-001 PO Cannot Be Approved [SELF-SERVICE], PUR-002 GRN Not Matching PO [SELF-SERVICE], PUR-003 Invoice Cannot Match PO [ENGINEER REQUIRED], PUR-004 Requisition Stuck [ENGINEER REQUIRED], PUR-005 Supplier Not in List [SELF-SERVICE]
+System (SYS-001 to SYS-005): SYS-001 System Slow [ENGINEER REQUIRED], SYS-002 User Cannot Login [SELF-SERVICE], SYS-003 Wrong Logo on Print [SELF-SERVICE] P4, SYS-004 Excel Export Broken [SELF-SERVICE], SYS-005 Integration Stopped [ENGINEER REQUIRED]
+
+KB-002 PRIORITY MATRIX:
+P1 CRITICAL (Response: 15 min, 24/7): Complete outage, revenue halted, no workaround. Always P1: FIN-006, HR-001, HR-004, HR-005, POS-001, PMS-001
+P2 HIGH (Response: 1 hour): Major function impaired, workaround exists but inefficient
+P3 MEDIUM (Response: 4 hours): Minor issue, operations continue
+P4 LOW (Response: 8 hours): Cosmetic, inquiry, non-urgent
+
+PRIORITY OVERRIDE EXAMPLES:
+- FIN-001 default P3 → escalate to P2 if month-end deadline within 24 hours
+- POS-002 default P2 → escalate to P1 if ALL terminals affected during meal rush
+- HR-006 default P3 → escalate to P2 if payday is today
+- PMS-001 ALWAYS P1 — no override allowed downward
+
+KB-002 TICKET FORMAT: TSO-YYYY-MMDD-XXXXX
+KB-002 SLA TIMES: P1=15min, P2=1hr, P3=4hr, P4=8hr
+KB-002 ENGINEER TYPES: P1→Senior Engineer, P2→Helpdesk Engineer L1, P3/P4→Helpdesk Engineer
+
+KB-003 TEAM ROUTING:
+HMS/PMS → Hospitality Solutions Team (secondary: Database Team for night audit)
+F&B Solution → F&B Solutions Team (secondary: Integration Team for KDS/payment)
+Retail Solution → Retail Solutions Team (secondary: Hardware Team for POS peripherals)
+Enterprise ERP Finance → Finance Module Team
+Enterprise ERP HR/Payroll → HR Solutions Team (secondary: Compliance Team)
+Enterprise ERP Inventory → Supply Chain Team
+Enterprise ERP Purchasing → Procurement Team
+Cross-Module/System → Core Platform Team
+
+OPERATIONAL CONTEXT:
+- Business hours: Sunday–Thursday, 08:00–18:00 local time
+- P1 runs 24/7 regardless of business hours
+- Ticket counter starts at 00001 and increments per session
+- After-hours P1: create ticket immediately, alert on-call engineer
+
+[FORMAT]
+GREETING (Template A): "Thank you for contacting TechnoSoft Support. I am your AI support assistant. To help you efficiently, could you please tell me: 1. Which product line you are using (Hotel PMS, F&B Solution, Retail Solution, or Enterprise ERP)? 2. Which module or screen you were using when the issue occurred? 3. What error message or behavior you observed? Your ticket number will be provided once we identify the issue type."
+
+SELF-SERVICE (Template B): State issue code and name. Give numbered steps. Ask for resolution confirmation.
+
+TICKET CREATION — always output in this EXACT format:
+---TICKET DISPATCH ENVELOPE---
+Ticket Number: TSO-[YYYY]-[MMDD]-[XXXXX]
+Core Product Line & Module: [Product Line] — [Module]
+Initial Priority vs. Final Priority: P[#] vs. P[#] [state override reason if applied]
+Specialized Support Team Routing: [Team Name]
+Complete Session Summary for L1/L2 Engineer: [Full description: client name, company, product, module, issue reported, what was attempted, current status, any urgency context]
+---END ENVELOPE---
+
+Then use Template C: "I understand the urgency of this issue. I have created ticket [TSO-...] and assigned it to our [Team] with [Priority] priority. A [senior/helpdesk] engineer will contact you within [SLA time]. [Workaround if any.] Is there anything else I can clarify while you wait?"
+
+OUT-OF-SCOPE (Template E): Decline clearly but offer alternatives. Never refuse abruptly.
+CLOSURE (Template F): Summarize resolution. Ask 1-5 satisfaction rating.
+
+[LIMITATIONS]
+YOU WILL: Triage issues, deliver self-service steps, create tickets, communicate SLAs, route to correct team, answer product capability questions, detect duplicates, collect diagnostic info, apply priority overrides dynamically.
+YOU WILL NOT: Perform database changes, code deployments, system admin actions. Support hardware, network, third-party systems not by TechnoSoft. Process custom development. Attempt to resolve [ENGINEER REQUIRED] issues. Provide legally sensitive calculations. Impersonate a human. Engage outside TechnoSoft support domain.
+
+[INTERACTION PROTOCOL]
+1. Open with Template A greeting
+2. Apply KB-003 routing tree: identify product line from client description or business type
+3. Match to KB-001 issue code — reference it explicitly
+4. Classify priority per KB-002 matrix. Apply override conditions based on client context. Default HIGHER when in doubt.
+5. If [SELF-SERVICE]: deliver steps, confirm resolution, use Template F to close
+6. If [ENGINEER REQUIRED] or self-service fails: execute full handoff — output TICKET DISPATCH ENVELOPE + Template C
+7. If unclassified: open ticket with "UNCLASSIFIED" code, default P2, route to Core Platform Team
+8. Close EVERY interaction with: (a) clear next step (b) ticket number if created (c) "Is there anything else I can clarify?"
+CRITICAL: Never leave a client without closure. Never create a ticket without a TICKET DISPATCH ENVELOPE. Never classify a no-override P1 issue lower. Never exceed 3 clarifying questions before routing decision.`;
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let conversationHistory = [];
+let tickets = [];
+let selfResolved = 0;
+let ticketCounter = 0;
+let sessionNum = Math.floor(Math.random() * 90000) + 10000;
+let greetingTriggered = false;
+
+// ══════════════════════════════════════════════════════════════
+// GREETING — auto-trigger once key is ready
+// ══════════════════════════════════════════════════════════════
+async function triggerGreeting() {
+  if (greetingTriggered) return;
+  greetingTriggered = true;
+
+  const typingId = showTyping();
+  try {
+    const reply = await callGemini([{ role: 'user', parts: [{ text: 'Hello' }] }]);
+    removeTyping(typingId);
+    // Don't show user "Hello" — just the agent greeting
+    conversationHistory.push({ role: 'user', parts: [{ text: 'Hello' }] });
+    conversationHistory.push({ role: 'model', parts: [{ text: reply }] });
+    appendAgentMessage(reply);
+  } catch(e) {
+    removeTyping(typingId);
+    appendMessage('agent', '⚠ Could not reach the Gemini API. Please check your API key and try again.');
+    greetingTriggered = false; // allow retry
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// GEMINI API CALL
+// ══════════════════════════════════════════════════════════════
+async function callGemini(messages) {
+  const key = getApiKey();
+  if (!key) throw new Error('No API key set.');
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${key}`;
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: messages,
+      generationConfig: {
+        temperature: 0.2,
+        maxOutputTokens: 2048,
+        topP: 0.8
+      }
+    })
+  });
+
+  const data = await response.json();
+
+  if (data.error) throw new Error(data.error.message);
+
+  return data.candidates?.[0]?.content?.parts?.[0]?.text
+    || "I'm sorry, I couldn't process that. Please try again.";
+}
+
+// ══════════════════════════════════════════════════════════════
+// SEND MESSAGE
+// ══════════════════════════════════════════════════════════════
+async function sendMessage() {
+  const key = getApiKey();
+  if (!key) {
+    showToast('Please save your Gemini API key first.');
+    document.getElementById('apiKeyInput').focus();
+    return;
+  }
+
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = '44px';
+  setInputState(true);
+
+  appendMessage('user', text);
+  conversationHistory.push({ role: 'user', parts: [{ text }] });
+
+  const typingId = showTyping();
+
+  try {
+    const reply = await callGemini(conversationHistory);
+    removeTyping(typingId);
+    conversationHistory.push({ role: 'model', parts: [{ text: reply }] });
+    appendAgentMessage(reply);
+    parseAndLogTicket(reply, text);
+  } catch (err) {
+    removeTyping(typingId);
+    const msg = err.message.includes('API key') || err.message.includes('key')
+      ? '⚠ Invalid or missing API key. Please check the key in the header and try again.'
+      : `⚠ Error: ${err.message}`;
+    appendMessage('agent', msg);
+  }
+
+  setInputState(false);
+  document.getElementById('userInput').focus();
+}
+
+function setInputState(disabled) {
+  document.getElementById('sendBtn').disabled = disabled;
+  document.getElementById('userInput').disabled = disabled;
+}
+
+// ══════════════════════════════════════════════════════════════
+// CLEAR SESSION
+// ══════════════════════════════════════════════════════════════
+function clearSession() {
+  if (!confirm('Start a new session? Current conversation will be cleared.')) return;
+  conversationHistory = [];
+  greetingTriggered = false;
+  sessionNum = Math.floor(Math.random() * 90000) + 10000;
+  document.getElementById('sessionId').textContent = `SESSION: #${sessionNum}-A`;
+
+  const container = document.getElementById('chatMessages');
+  container.innerHTML = `
+    <div class="welcome-card">
+      <h3>TechnoSoft AI Support Agent</h3>
+      <p>Powered by Gemini AI with full knowledge base context (KB-001, KB-002, KB-003). I can triage your issue, provide self-service resolution steps, or open a support ticket and assign it to the right engineering team.</p>
+      <div class="product-tags">
+        <span class="product-tag">Hotel PMS</span>
+        <span class="product-tag">F&B Solution</span>
+        <span class="product-tag">Retail Solution</span>
+        <span class="product-tag">Enterprise ERP</span>
+      </div>
+    </div>`;
+
+  if (getApiKey()) triggerGreeting();
+  showToast('New session started.');
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER MESSAGES
+// ══════════════════════════════════════════════════════════════
+function appendMessage(role, text) {
+  const container = document.getElementById('chatMessages');
+  const msg = document.createElement('div');
+  msg.className = `msg ${role}`;
+  msg.innerHTML = `
+    <div class="avatar ${role}">${role === 'agent' ? 'AI' : 'CL'}</div>
+    <div class="bubble">${escapeHtml(text).replace(/\n/g,'<br>')}</div>
+  `;
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendAgentMessage(text) {
+  const container = document.getElementById('chatMessages');
+  const msg = document.createElement('div');
+  msg.className = 'msg agent';
+
+  // Split out TICKET DISPATCH ENVELOPE
+  const envRegex = /---TICKET DISPATCH ENVELOPE---([\s\S]*?)---END ENVELOPE---/;
+  const envelopeMatch = text.match(envRegex);
+  let mainText = text.replace(envRegex, '').trim();
+  let envelopeHtml = '';
+
+  if (envelopeMatch) {
+    envelopeHtml = renderEnvelope(envelopeMatch[1].trim());
+  }
+
+  const bubbleContent = (mainText ? formatText(mainText) : '') + envelopeHtml;
+  msg.innerHTML = `<div class="avatar agent">AI</div><div class="bubble">${bubbleContent}</div>`;
+  container.appendChild(msg);
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderEnvelope(content) {
+  const lines = content.split('\n').filter(l => l.trim());
+  let html = '<div class="ticket-envelope">';
+  html += '<div class="env-header">─── TICKET DISPATCH ENVELOPE ───</div>';
+
+  lines.forEach(line => {
+    const colonIdx = line.indexOf(':');
+    if (colonIdx > -1) {
+      const label = escapeHtml(line.substring(0, colonIdx + 1));
+      const rawValue = line.substring(colonIdx + 1);
+      // Colorize priority tags without double-escaping
+      const valueHtml = escapeHtml(rawValue)
+        .replace(/P1/g, '<span class="env-priority-p1">P1</span>')
+        .replace(/P2/g, '<span class="env-priority-p2">P2</span>')
+        .replace(/P3/g, '<span class="env-priority-p3">P3</span>')
+        .replace(/P4/g, '<span class="env-priority-p4">P4</span>');
+      html += `<div class="env-row"><span class="label">${label}</span>${valueHtml}</div>`;
+    } else {
+      html += `<div class="env-row">${escapeHtml(line)}</div>`;
+    }
+  });
+
+  html += '<div class="env-footer">─── END ENVELOPE ───</div>';
+  html += '</div>';
+  return html;
+}
+
+function formatText(text) {
+  return escapeHtml(text)
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>');
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function showTyping() {
+  const container = document.getElementById('chatMessages');
+  const id = 'typing-' + Date.now();
+  const el = document.createElement('div');
+  el.id = id;
+  el.className = 'msg agent';
+  el.innerHTML = `<div class="avatar agent">AI</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+// ══════════════════════════════════════════════════════════════
+// PARSE TICKET FROM AGENT RESPONSE
+// ══════════════════════════════════════════════════════════════
+function parseAndLogTicket(reply, userMessage) {
+  const envelopeMatch = reply.match(/---TICKET DISPATCH ENVELOPE---([\s\S]*?)---END ENVELOPE---/);
+
+  if (envelopeMatch) {
+    const env = envelopeMatch[1];
+
+    const ticketNumMatch = env.match(/Ticket Number:\s*(TSO-[\d-]+)/i);
+    const productMatch   = env.match(/Core Product Line & Module:\s*(.+)/i);
+    const teamMatch      = env.match(/Specialized Support Team Routing:\s*(.+)/i);
+    const summaryMatch   = env.match(/Complete Session Summary[^:]*:\s*([\s\S]+?)(?=\n---|$)/i);
+
+    // Robust priority: grab "Final Priority: Px" or last Px in the priority line
+    let priority = 'P3';
+    const prioLineMatch = env.match(/Initial Priority vs\. Final Priority:\s*(.+)/i);
+    if (prioLineMatch) {
+      // Extract the last Px found (the "Final" one after "vs.")
+      const allP = prioLineMatch[1].match(/P[1-4]/gi);
+      if (allP && allP.length >= 2) priority = allP[allP.length - 1].toUpperCase();
+      else if (allP && allP.length === 1) priority = allP[0].toUpperCase();
+    }
+
+    const ticketNum = ticketNumMatch ? ticketNumMatch[1].trim() : generateTicketId();
+    const product   = productMatch   ? productMatch[1].trim()   : 'Unknown Product';
+    const team      = teamMatch      ? teamMatch[1].trim()       : 'Core Platform Team';
+    const summary   = summaryMatch   ? summaryMatch[1].trim()    : userMessage;
+
+    const ticket = { ticketNum, product, priority, team, summary, time: new Date(), type: 'dispatched' };
+    tickets.push(ticket);
+    renderTicketCard(ticket);
+    updateStats();
+    return;
+  }
+
+  // Detect self-resolved closure (Template F)
+  const resolutionPhrases = ['resolved', 'glad that', 'rate your', '1-5', 'satisfaction', 'issue has been'];
+  const isResolved = resolutionPhrases.some(p => reply.toLowerCase().includes(p));
+  if (isResolved) {
+    selfResolved++;
+    // Log a lightweight resolved entry
+    const resolved = {
+      ticketNum: `SELF-${generateShortId()}`,
+      product: 'Self-Service Resolution',
+      priority: 'RESOLVED',
+      team: 'Self-Service',
+      summary: userMessage.substring(0, 200),
+      time: new Date(),
+      type: 'resolved'
+    };
+    tickets.push(resolved);
+    renderTicketCard(resolved);
+    updateStats();
+  }
+}
+
+function generateTicketId() {
+  ticketCounter++;
+  const now = new Date();
+  const y  = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const seq = String(ticketCounter).padStart(5, '0');
+  return `TSO-${y}-${mm}${dd}-${seq}`;
+}
+
+function generateShortId() {
+  return Math.floor(Math.random() * 90000 + 10000);
+}
+
+function renderTicketCard(ticket) {
+  const list = document.getElementById('ticketList');
+  const emptyMsg = list.querySelector('.empty-crm');
+  if (emptyMsg) emptyMsg.remove();
+
+  const isResolved = ticket.type === 'resolved';
+  const pClass = isResolved ? 'resolved' : ticket.priority.toLowerCase();
+
+  const card = document.createElement('div');
+  card.className = `ticket-card ${pClass}`;
+
+  const badgeHtml = isResolved
+    ? `<span class="resolved-badge">✔ RESOLVED</span>`
+    : `<span class="priority-badge ${pClass}">${ticket.priority}</span>`;
+
+  const productParts = ticket.product.split('—');
+  const productMain  = productParts[0] ? productParts[0].trim() : ticket.product;
+  const productSub   = productParts[1] ? productParts[1].trim() : '';
+
+  card.innerHTML = `
+    <div class="tc-top">
+      <div class="tc-id">${ticket.ticketNum}</div>
+      <div class="tc-time">${ticket.time.toLocaleTimeString()}</div>
+    </div>
+    <div class="tc-mid">
+      <div class="tc-client">${escapeHtml(productMain)}</div>
+      ${productSub ? `<div class="tc-product">${escapeHtml(productSub)}</div>` : ''}
+    </div>
+    <div class="tc-mid">
+      ${badgeHtml}
+      <span class="team-badge">${escapeHtml(ticket.team)}</span>
+    </div>
+    <div class="tc-problem">${escapeHtml(ticket.summary.substring(0, 200))}${ticket.summary.length > 200 ? '…' : ''}</div>
+  `;
+  list.insertBefore(card, list.firstChild);
+}
+
+function updateStats() {
+  const dispatched = tickets.filter(t => t.type === 'dispatched');
+  document.getElementById('statTotal').textContent    = dispatched.length;
+  document.getElementById('statP1').textContent       = dispatched.filter(t => t.priority === 'P1').length;
+  document.getElementById('statP2').textContent       = dispatched.filter(t => t.priority === 'P2').length;
+  document.getElementById('statResolved').textContent = selfResolved;
+}
+
+// ══════════════════════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════════════════════
+function exportCSV() {
+  if (tickets.length === 0) { showToast('No tickets to export yet.'); return; }
+
+  const header = ['Ticket ID', 'Type', 'Product Line & Module', 'Priority', 'Team', 'Summary', 'Timestamp'];
+  const rows = tickets.map(t => [
+    t.ticketNum,
+    t.type === 'resolved' ? 'Self-Resolved' : 'Dispatched',
+    `"${t.product.replace(/"/g, "'")}"`,
+    t.priority,
+    `"${t.team.replace(/"/g, "'")}"`,
+    `"${t.summary.replace(/"/g, "'").replace(/\n/g, ' ')}"`,
+    t.time.toISOString()
+  ]);
+
+  const csv = [header.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `TechnoSoft_CRM_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${tickets.length} record(s).`);
+}
+
+// ══════════════════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ══════════════════════════════════════════════════════════════
+// KEYBOARD & TEXTAREA AUTO-RESIZE
+// ══════════════════════════════════════════════════════════════
+const textarea = document.getElementById('userInput');
+
+textarea.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+textarea.addEventListener('input', function() {
+  this.style.height = '44px';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// Allow Enter in API key field to save
+document.getElementById('apiKeyInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') saveApiKey();
+});
+</script>
+</body>
+</html>
